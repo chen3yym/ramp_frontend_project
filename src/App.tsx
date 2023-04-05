@@ -21,13 +21,14 @@ export function App() {
 
   const loadAllTransactions = useCallback(async () => {
     setIsLoading(true)
-    transactionsByEmployeeUtils.invalidateData()
+    // transactionsByEmployeeUtils.invalidateData()
 
     await employeeUtils.fetchAll()
+    setIsLoading(false)
     await paginatedTransactionsUtils.fetchAll()
 
-    setIsLoading(false)
-  }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils])
+    // setIsLoading(false)
+  }, [employeeUtils, paginatedTransactionsUtils])
 
   const loadTransactionsByEmployee = useCallback(
     async (employeeId: string) => {
@@ -63,9 +64,11 @@ export function App() {
           onChange={async (newValue) => {
             if (newValue === null) {
               return
+            } else if (newValue.id !== "") {
+              await loadTransactionsByEmployee(newValue.id)
+            } else {
+              await loadAllTransactions()
             }
-
-            await loadTransactionsByEmployee(newValue.id)
           }}
         />
 
@@ -73,18 +76,24 @@ export function App() {
 
         <div className="RampGrid">
           <Transactions transactions={transactions} />
-
-          {transactions !== null && (
+          {/* Bug 6: View more button not working as expected */}
+          {paginatedTransactions?.nextPage !== null &&
+          transactionsByEmployee === null &&
+          transactions !== null ? (
             <button
               className="RampButton"
-              disabled={paginatedTransactionsUtils.loading}
+              disabled={
+                paginatedTransactionsUtils.loading || paginatedTransactions?.nextPage == null
+                  ? true
+                  : false
+              }
               onClick={async () => {
                 await loadAllTransactions()
               }}
             >
               View More
             </button>
-          )}
+          ) : null}
         </div>
       </main>
     </Fragment>
